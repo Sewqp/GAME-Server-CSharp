@@ -1,4 +1,4 @@
-# RPG-Server-CSharp
+# GAME-Server-CSharp
 
 C# 기반 비동기 분산 게임 서버 포트폴리오
 
