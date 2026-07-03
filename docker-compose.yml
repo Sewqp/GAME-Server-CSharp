@@ -1,0 +1,69 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: game_server_cs
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./DB:/docker-entrypoint-initdb.d:ro
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  gameserver-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      TCP_PORT: "9000"
+      MYSQL_CONN: "Server=mysql;Port=3306;Database=game_server_cs;Uid=root;Pwd=password;Pooling=true;MinimumPoolSize=5;MaximumPoolSize=100;CharacterSet=utf8mb4;"
+      REDIS_CONN: "redis:6379"
+      ORLEANS_CLUSTER_ID: "game-server-cluster"
+      ORLEANS_SERVICE_ID: "GameServerCS"
+      ORLEANS_SILO_PORT: "11111"
+      ORLEANS_GATEWAY_PORT: "30000"
+    ports:
+      - "9000:9000"
+
+  gameserver-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      TCP_PORT: "9000"
+      MYSQL_CONN: "Server=mysql;Port=3306;Database=game_server_cs;Uid=root;Pwd=password;Pooling=true;MinimumPoolSize=5;MaximumPoolSize=100;CharacterSet=utf8mb4;"
+      REDIS_CONN: "redis:6379"
+      ORLEANS_CLUSTER_ID: "game-server-cluster"
+      ORLEANS_SERVICE_ID: "GameServerCS"
+      ORLEANS_SILO_PORT: "11111"
+      ORLEANS_GATEWAY_PORT: "30000"
+    ports:
+      - "9001:9000"
+
+volumes:
+  mysql-data:

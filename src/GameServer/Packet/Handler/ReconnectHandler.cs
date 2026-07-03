@@ -19,8 +19,7 @@ public static class ReconnectHandler
         bool success = value.HasValue && long.TryParse((string?)value, out playerId);
         if (success)
         {
-            session.PlayerId = playerId;
-            SessionManager.Instance.RegisterPlayerId(playerId, session.SessionId);
+            await session.AttachPlayerAsync(playerId);
             Console.WriteLine($"[Reconnect] Session {session.SessionId} restored PlayerId={playerId}");
         }
 

@@ -2,6 +2,8 @@ namespace GameServer.Packet;
 
 public enum PacketId : ushort
 {
+    LoginRequest     = 1000,
+    LoginResult      = 1001,
     CharacterInfo    = 1002,
     CharacterStat    = 1003,
     EnterRoom        = 1008,

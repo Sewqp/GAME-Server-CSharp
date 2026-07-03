@@ -1,12 +1,10 @@
+using GameServer.Grains;
 using GameServer.Network;
-using GameServer.Service;
 
 namespace GameServer.Packet.Handler;
 
 public static class MatchHandler
 {
-    public static async Task HandleAsync(ClientSession session, Memory<byte> packet)
-    {
-        await MatchmakingService.Instance.EnqueueAsync(session.SessionId);
-    }
+    public static Task HandleAsync(ClientSession session, Memory<byte> packet)
+        => OrleansClient.Instance.Factory.GetGrain<IMatchGrain>(0).RequestMatchAsync(session.PlayerId);
 }

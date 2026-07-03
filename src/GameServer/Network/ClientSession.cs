@@ -1,6 +1,6 @@
 using System.Net.Sockets;
+using GameServer.Grains;
 using GameServer.Packet;
-using GameServer.Service;
 
 namespace GameServer.Network;
 
@@ -11,6 +11,8 @@ public sealed class ClientSession
     private readonly PacketBuffer _recvBuffer = new();
     private readonly SemaphoreSlim _sendLock = new(1, 1);
     private readonly CancellationToken _ct;
+    private readonly HashSet<int> _joinedChannels = new();
+    private IPlayerSessionObserver? _observerRef;
 
     public Guid SessionId { get; } = Guid.NewGuid();
     public long PlayerId { get; set; }
@@ -23,6 +25,18 @@ public sealed class ClientSession
         _client = client;
         _stream = client.GetStream();
         _ct = ct;
+    }
+
+    public void JoinChannel(int channelId) => _joinedChannels.Add(channelId);
+
+    public void LeaveChannel(int channelId) => _joinedChannels.Remove(channelId);
+
+    public async Task AttachPlayerAsync(long playerId)
+    {
+        PlayerId = playerId;
+        SessionManager.Instance.RegisterPlayerId(playerId, SessionId);
+        _observerRef ??= OrleansClient.Instance.Factory.CreateObjectReference<IPlayerSessionObserver>(new PlayerSessionObserver(this));
+        await OrleansClient.Instance.Factory.GetGrain<IPlayerGrain>(playerId).SubscribeAsync(_observerRef);
     }
 
     public async Task StartAsync()
@@ -50,14 +64,20 @@ public sealed class ClientSession
         }
     }
 
-    public Task DisconnectAsync()
+    public async Task DisconnectAsync()
     {
-        ChannelManager.Instance.LeaveAll(SessionId);
+        if (PlayerId != 0)
+        {
+            foreach (var channelId in _joinedChannels)
+                await OrleansClient.Instance.Factory.GetGrain<IChannelGrain>(channelId).LeaveAsync(PlayerId);
+
+            await OrleansClient.Instance.Factory.GetGrain<IPlayerGrain>(PlayerId).OnDisconnectAsync();
+        }
+
         SessionManager.Instance.UnregisterPlayerId(PlayerId);
         SessionManager.Instance.Remove(SessionId);
         _stream.Close();
         _client.Close();
-        return Task.CompletedTask;
     }
 
     private async Task RecvLoopAsync()
