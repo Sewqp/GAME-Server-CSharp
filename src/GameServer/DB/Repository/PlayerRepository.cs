@@ -31,6 +31,29 @@ public sealed class PlayerRepository
         };
     }
 
+    public async Task<PlayerModel?> GetByNameAsync(string name)
+    {
+        await using var conn = DbConnectionPool.Instance.GetConnection();
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText =
+            "SELECT player_id, pname, status, created_at, updated_at " +
+            "FROM player WHERE pname = @name";
+        cmd.Parameters.AddWithValue("@name", name);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+        if (!await reader.ReadAsync()) return null;
+
+        return new PlayerModel
+        {
+            PlayerId  = reader.GetInt64(0),
+            PName     = reader.GetString(1),
+            Status    = reader.GetByte(2),
+            CreatedAt = reader.GetDateTime(3),
+            UpdatedAt = reader.GetDateTime(4),
+        };
+    }
+
     public async Task<long> CreateAsync(string name)
     {
         await using var conn = DbConnectionPool.Instance.GetConnection();

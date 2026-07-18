@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS `player` (
     `status`     TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '0=정상 1=정지 2=영구밴',
     `created_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`player_id`)
+    PRIMARY KEY (`player_id`),
+    UNIQUE KEY `uq_player_pname` (`pname`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 -- ──────────────────────────────────────────────────────────────

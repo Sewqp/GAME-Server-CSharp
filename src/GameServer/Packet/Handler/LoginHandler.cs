@@ -18,7 +18,8 @@ public static class LoginHandler
         if (payload.Length < 2 + nameLen) return;
         var name = Encoding.UTF8.GetString(payload.Slice(2, nameLen));
 
-        long playerId = await PlayerRepository.Instance.CreateAsync(name);
+        var existing = await PlayerRepository.Instance.GetByNameAsync(name);
+        long playerId = existing?.PlayerId ?? await PlayerRepository.Instance.CreateAsync(name);
         await session.AttachPlayerAsync(playerId);
 
         var token = Guid.NewGuid().ToString();
