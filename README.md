@@ -163,6 +163,8 @@ flowchart TD
 | 2026.06.29 | Phase 1 TCP 비동기 서버 기반 구현 |
 | 2026.06.30 | Phase 2 DB 설정 — MySQL 커넥션 풀, Redis 캐싱, SyncWorker |
 | 2026.07.01 | Phase 3 게임 서버 기능 구현 — 채팅, 매칭, 재접속, 하트비트 |
+| 2026.07.03 | Phase 4 Orleans 분산 처리 도입 — Redis 클러스터링 + 로그인 플로우, Docker Compose 구성 |
+| 2026.07.18 | 미인증 세션 PlayerId 충돌 및 로그인 시 캐릭터 유실 버그 수정 |
 
 ---
 
