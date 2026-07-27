@@ -7,7 +7,9 @@ namespace GameServer.Packet.Handler;
 
 public static class LoginHandler
 {
+    private const int LoginLogInterval = 1000;
     private static readonly TimeSpan ReconnectTokenTtl = TimeSpan.FromSeconds(300);
+    private static long _loginCount;
 
     public static async Task HandleAsync(ClientSession session, Memory<byte> packet)
     {
@@ -18,8 +20,7 @@ public static class LoginHandler
         if (payload.Length < 2 + nameLen) return;
         var name = Encoding.UTF8.GetString(payload.Slice(2, nameLen));
 
-        var existing = await PlayerRepository.Instance.GetByNameAsync(name);
-        long playerId = existing?.PlayerId ?? await PlayerRepository.Instance.CreateAsync(name);
+        long playerId = await PlayerRepository.Instance.GetOrCreateByNameAsync(name);
         await session.AttachPlayerAsync(playerId);
 
         var token = Guid.NewGuid().ToString();
@@ -33,6 +34,9 @@ public static class LoginHandler
         tokenBytes.CopyTo(result.AsSpan(9));
 
         await session.SendAsync(PacketWriter.Build(PacketId.LoginResult, result));
-        Console.WriteLine($"[Login] Session {session.SessionId} logged in as PlayerId={playerId}");
+
+        long loginCount = Interlocked.Increment(ref _loginCount);
+        if (loginCount % LoginLogInterval == 0)
+            Console.WriteLine($"[Login] Total logins so far: {loginCount}");
     }
 }

@@ -17,7 +17,7 @@ public sealed class ServerConfig
         TcpPort = int.TryParse(Env("TCP_PORT"), out var p) ? p : 9000,
         MySqlConnectionString = Env("MYSQL_CONN")
             ?? "Server=127.0.0.1;Port=3306;Database=game_server_cs;Uid=root;Pwd=password;" +
-               "Pooling=true;MinimumPoolSize=5;MaximumPoolSize=100;CharacterSet=utf8mb4;",
+               "Pooling=true;MinimumPoolSize=5;MaximumPoolSize=120;CharacterSet=utf8mb4;",
         RedisConnectionString = Env("REDIS_CONN") ?? "127.0.0.1:6379",
         OrleansClusterId = Env("ORLEANS_CLUSTER_ID") ?? "game-server-cluster",
         OrleansServiceId = Env("ORLEANS_SERVICE_ID") ?? "GameServerCS",

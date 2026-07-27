@@ -6,6 +6,7 @@ bin/
 obj/
 *.user
 .vs/
+launchSettings.json
 
 # OS
 .DS_Store

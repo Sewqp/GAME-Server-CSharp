@@ -64,4 +64,18 @@ public sealed class PlayerRepository
         await cmd.ExecuteNonQueryAsync();
         return cmd.LastInsertedId;
     }
+
+    public async Task<long> GetOrCreateByNameAsync(string name)
+    {
+        await using var conn = DbConnectionPool.Instance.GetConnection();
+        await conn.OpenAsync();
+        await using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            INSERT INTO player (pname) VALUES (@name)
+            ON DUPLICATE KEY UPDATE player_id = LAST_INSERT_ID(player_id)
+            """;
+        cmd.Parameters.AddWithValue("@name", name);
+        await cmd.ExecuteNonQueryAsync();
+        return cmd.LastInsertedId;
+    }
 }

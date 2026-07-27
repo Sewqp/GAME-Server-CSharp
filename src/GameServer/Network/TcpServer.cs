@@ -5,6 +5,8 @@ namespace GameServer.Network;
 
 public sealed class TcpServer
 {
+    private const int ConnectionLogInterval = 1000;
+
     private readonly TcpListener _listener;
     private readonly CancellationToken _ct;
 
@@ -16,7 +18,7 @@ public sealed class TcpServer
 
     public async Task StartAsync()
     {
-        _listener.Start();
+        _listener.Start(512);
         Console.WriteLine($"[TcpServer] Listening on port {((IPEndPoint)_listener.LocalEndpoint).Port}");
         await AcceptLoopAsync();
     }
@@ -37,7 +39,11 @@ public sealed class TcpServer
                 var client = await _listener.AcceptTcpClientAsync(_ct);
                 var session = new ClientSession(client, _ct);
                 SessionManager.Instance.Add(session);
-                Console.WriteLine($"[TcpServer] Session connected: {session.SessionId} (total: {SessionManager.Instance.Count})");
+
+                int total = SessionManager.Instance.Count;
+                if (total % ConnectionLogInterval == 0)
+                    Console.WriteLine($"[TcpServer] Sessions connected: {total}");
+
                 _ = session.StartAsync();
             }
             catch (OperationCanceledException)
