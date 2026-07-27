@@ -5,11 +5,21 @@ using StackExchange.Redis;
 using GameServer.Config;
 using GameServer.DB;
 using GameServer.Grains;
+using GameServer.Logging;
 using GameServer.Network;
 using GameServer.Packet;
 using GameServer.Packet.Handler;
 
 var config = ServerConfig.Instance;
+
+using var cts = new CancellationTokenSource();
+Console.CancelKeyPress += (_, e) =>
+{
+    e.Cancel = true;
+    cts.Cancel();
+};
+
+AsyncLogger.Instance.Init(config.LmStudioUrl, config.DiscordWebhookUrl, cts.Token);
 
 DbConnectionPool.Instance.Init(config.MySqlConnectionString);
 Console.WriteLine("[DB] MySQL connection pool ready.");
@@ -37,13 +47,6 @@ using var host = hostBuilder.Build();
 await host.StartAsync();
 OrleansClient.Instance.Init(host.Services.GetRequiredService<IGrainFactory>());
 Console.WriteLine($"[Orleans] Silo active. Cluster={config.OrleansClusterId}");
-
-using var cts = new CancellationTokenSource();
-Console.CancelKeyPress += (_, e) =>
-{
-    e.Cancel = true;
-    cts.Cancel();
-};
 
 _ = new SyncWorker(cts.Token).RunAsync();
 _ = new HeartbeatManager(cts.Token).RunAsync();

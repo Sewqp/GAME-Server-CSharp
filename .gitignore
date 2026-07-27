@@ -8,6 +8,13 @@ obj/
 .vs/
 launchSettings.json
 
+# Node.js (admin-server)
+node_modules/
+admin-server/.env
+
+# 서버 런타임 로그
+logs/
+
 # OS
 .DS_Store
 Thumbs.db

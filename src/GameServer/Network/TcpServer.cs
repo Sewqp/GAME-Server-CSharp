@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using GameServer.Logging;
 
 namespace GameServer.Network;
 
@@ -44,7 +45,9 @@ public sealed class TcpServer
                 if (total % ConnectionLogInterval == 0)
                     Console.WriteLine($"[TcpServer] Sessions connected: {total}");
 
-                _ = session.StartAsync();
+                _ = session.StartAsync().ContinueWith(
+                    t => AsyncLogger.Instance.LogError($"Unhandled session error: {session.SessionId}", t.Exception),
+                    TaskContinuationOptions.OnlyOnFaulted);
             }
             catch (OperationCanceledException)
             {
@@ -52,7 +55,7 @@ public sealed class TcpServer
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[TcpServer] Accept error: {ex.Message}");
+                AsyncLogger.Instance.LogError("Accept error", ex);
             }
         }
     }

@@ -1,9 +1,13 @@
+using GameServer.DB;
+
 namespace GameServer.Network;
 
 public sealed class HeartbeatManager
 {
     private const int IntervalMs = 5_000;
     private const int TimeoutSeconds = 30;
+    private const string SessionCountKey = "stats:session_count";
+    private static readonly TimeSpan SessionCountTtl = TimeSpan.FromSeconds(15);
 
     private readonly CancellationToken _ct;
 
@@ -29,6 +33,9 @@ public sealed class HeartbeatManager
                 Console.WriteLine($"[Heartbeat] Timeout: {session.SessionId}");
                 await session.DisconnectAsync();
             }
+
+            await RedisClient.Instance.Db.StringSetAsync(
+                SessionCountKey, SessionManager.Instance.Count, SessionCountTtl);
         }
     }
 }
