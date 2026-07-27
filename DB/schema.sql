@@ -79,6 +79,13 @@ CREATE TABLE IF NOT EXISTS `inventory` (
         FOREIGN KEY (`item_instance_id`) REFERENCES `item_instance` (`item_instance_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
+-- item_definition 시드 데이터
+INSERT IGNORE INTO `item_definition` (`item_def_id`, `item_name`, `item_desc`, `item_type`) VALUES
+    (1, '체력 물약',   'HP를 회복하는 소모품', 1),
+    (2, '마나 물약',   'MP를 회복하는 소모품', 1),
+    (3, '강철 검',     '기본 공격 장비',       0),
+    (4, '가죽 갑옷',   '기본 방어 장비',       0);
+
 -- ──────────────────────────────────────────────────────────────
 -- guild
 -- ──────────────────────────────────────────────────────────────

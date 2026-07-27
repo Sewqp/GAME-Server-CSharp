@@ -61,6 +61,9 @@ dispatcher.Register(PacketId.ChatMessage,      ChatHandler.HandleChatAsync);
 dispatcher.Register(PacketId.WhisperMessage,   ChatHandler.HandleWhisperAsync);
 dispatcher.Register(PacketId.MatchRequest,     MatchHandler.HandleAsync);
 dispatcher.Register(PacketId.CharacterStat,    CharacterStatHandler.HandleAsync);
+dispatcher.Register(PacketId.ItemAcquireRequest, ItemHandler.HandleAcquireAsync);
+dispatcher.Register(PacketId.InventoryRequest,    ItemHandler.HandleInventoryRequestAsync);
+dispatcher.Register(PacketId.ItemUseRequest,      ItemHandler.HandleUseAsync);
 
 var server = new TcpServer(config.TcpPort, cts.Token);
 await server.StartAsync();
