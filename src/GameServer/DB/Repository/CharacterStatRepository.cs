@@ -1,5 +1,5 @@
 using System.Text.Json;
-using MySqlConnector;
+using Npgsql;
 using StackExchange.Redis;
 using GameServer.DB.Model;
 
@@ -56,7 +56,7 @@ public sealed class CharacterStatRepository
             : null;
     }
 
-    // SyncWorker 전용: MySQL에만 쓰기
+    // SyncWorker 전용: PostgreSQL에만 쓰기
     internal async Task WriteToDbAsync(CharacterStatModel stat)
     {
         await using var conn = DbConnectionPool.Instance.GetConnection();
@@ -65,14 +65,14 @@ public sealed class CharacterStatRepository
         cmd.CommandText = """
             INSERT INTO character_stat (player_id, level, hp_max, hp, mp_max, mp, is_alive, last_map_id)
             VALUES (@pid, @level, @hpMax, @hp, @mpMax, @mp, @alive, @mapId)
-            ON DUPLICATE KEY UPDATE
-                level      = VALUES(level),
-                hp_max     = VALUES(hp_max),
-                hp         = VALUES(hp),
-                mp_max     = VALUES(mp_max),
-                mp         = VALUES(mp),
-                is_alive   = VALUES(is_alive),
-                last_map_id = VALUES(last_map_id)
+            ON CONFLICT (player_id) DO UPDATE SET
+                level      = EXCLUDED.level,
+                hp_max     = EXCLUDED.hp_max,
+                hp         = EXCLUDED.hp,
+                mp_max     = EXCLUDED.mp_max,
+                mp         = EXCLUDED.mp,
+                is_alive   = EXCLUDED.is_alive,
+                last_map_id = EXCLUDED.last_map_id
             """;
         cmd.Parameters.AddWithValue("@pid",   stat.PlayerId);
         cmd.Parameters.AddWithValue("@level", stat.Level);
@@ -106,7 +106,7 @@ public sealed class CharacterStatRepository
             Hp        = reader.GetInt32(3),
             MpMax     = reader.GetInt32(4),
             Mp        = reader.GetInt32(5),
-            IsAlive   = reader.GetByte(6) == 1,
+            IsAlive   = reader.GetInt16(6) == 1,
             LastMapId = reader.GetInt32(7),
         };
     }

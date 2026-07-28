@@ -1,16 +1,16 @@
 services:
-  mysql:
-    image: mysql:8.4
+  postgres:
+    image: postgres:16
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: game_server_cs
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: game_server_cs
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
       - ./DB:/docker-entrypoint-initdb.d:ro
-      - mysql-data:/var/lib/mysql
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-ppassword"]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -30,13 +30,13 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
       TCP_PORT: "9000"
-      MYSQL_CONN: "Server=mysql;Port=3306;Database=game_server_cs;Uid=root;Pwd=password;Pooling=true;MinimumPoolSize=5;MaximumPoolSize=100;CharacterSet=utf8mb4;"
+      POSTGRES_CONN: "Host=postgres;Port=5432;Database=game_server_cs;Username=postgres;Password=password;Pooling=true;Minimum Pool Size=5;Maximum Pool Size=100;"
       REDIS_CONN: "redis:6379"
       ORLEANS_CLUSTER_ID: "game-server-cluster"
       ORLEANS_SERVICE_ID: "GameServerCS"
@@ -50,13 +50,13 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
       TCP_PORT: "9000"
-      MYSQL_CONN: "Server=mysql;Port=3306;Database=game_server_cs;Uid=root;Pwd=password;Pooling=true;MinimumPoolSize=5;MaximumPoolSize=100;CharacterSet=utf8mb4;"
+      POSTGRES_CONN: "Host=postgres;Port=5432;Database=game_server_cs;Username=postgres;Password=password;Pooling=true;Minimum Pool Size=5;Maximum Pool Size=100;"
       REDIS_CONN: "redis:6379"
       ORLEANS_CLUSTER_ID: "game-server-cluster"
       ORLEANS_SERVICE_ID: "GameServerCS"
@@ -66,4 +66,4 @@ services:
       - "9001:9000"
 
 volumes:
-  mysql-data:
+  postgres-data:

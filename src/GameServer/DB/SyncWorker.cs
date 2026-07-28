@@ -48,7 +48,7 @@ public sealed class SyncWorker
             .Select(id => FlushOneAsync(id!.Value));
 
         await Task.WhenAll(tasks);
-        Console.WriteLine($"[SyncWorker] Flushed {members.Length} character(s) to MySQL.");
+        Console.WriteLine($"[SyncWorker] Flushed {members.Length} character(s) to PostgreSQL.");
     }
 
     private async Task FlushOneAsync(long playerId)

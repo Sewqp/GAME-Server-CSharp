@@ -11,7 +11,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "ioredis": "^5.4.1",
-    "mysql2": "^3.11.4",
+    "pg": "^8.13.0",
     "winston": "^3.15.0",
     "winston-transport": "^4.9.0"
   }

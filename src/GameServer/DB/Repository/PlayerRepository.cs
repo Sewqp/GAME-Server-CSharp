@@ -1,4 +1,4 @@
-using MySqlConnector;
+using Npgsql;
 using GameServer.DB.Model;
 
 namespace GameServer.DB.Repository;
@@ -25,7 +25,7 @@ public sealed class PlayerRepository
         {
             PlayerId  = reader.GetInt64(0),
             PName     = reader.GetString(1),
-            Status    = reader.GetByte(2),
+            Status    = (byte)reader.GetInt16(2),
             CreatedAt = reader.GetDateTime(3),
             UpdatedAt = reader.GetDateTime(4),
         };
@@ -48,7 +48,7 @@ public sealed class PlayerRepository
         {
             PlayerId  = reader.GetInt64(0),
             PName     = reader.GetString(1),
-            Status    = reader.GetByte(2),
+            Status    = (byte)reader.GetInt16(2),
             CreatedAt = reader.GetDateTime(3),
             UpdatedAt = reader.GetDateTime(4),
         };
@@ -59,10 +59,9 @@ public sealed class PlayerRepository
         await using var conn = DbConnectionPool.Instance.GetConnection();
         await conn.OpenAsync();
         await using var cmd = conn.CreateCommand();
-        cmd.CommandText = "INSERT INTO player (pname) VALUES (@name)";
+        cmd.CommandText = "INSERT INTO player (pname) VALUES (@name) RETURNING player_id";
         cmd.Parameters.AddWithValue("@name", name);
-        await cmd.ExecuteNonQueryAsync();
-        return cmd.LastInsertedId;
+        return (long)(await cmd.ExecuteScalarAsync())!;
     }
 
     public async Task<long> GetOrCreateByNameAsync(string name)
@@ -72,10 +71,10 @@ public sealed class PlayerRepository
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             INSERT INTO player (pname) VALUES (@name)
-            ON DUPLICATE KEY UPDATE player_id = LAST_INSERT_ID(player_id)
+            ON CONFLICT (pname) DO UPDATE SET pname = EXCLUDED.pname
+            RETURNING player_id
             """;
         cmd.Parameters.AddWithValue("@name", name);
-        await cmd.ExecuteNonQueryAsync();
-        return cmd.LastInsertedId;
+        return (long)(await cmd.ExecuteScalarAsync())!;
     }
 }

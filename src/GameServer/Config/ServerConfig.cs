@@ -5,7 +5,7 @@ public sealed class ServerConfig
     public static readonly ServerConfig Instance = Load();
 
     public int TcpPort { get; init; }
-    public string MySqlConnectionString { get; init; } = "";
+    public string PostgresConnectionString { get; init; } = "";
     public string RedisConnectionString { get; init; } = "";
     public string OrleansClusterId { get; init; } = "";
     public string OrleansServiceId { get; init; } = "";
@@ -17,9 +17,9 @@ public sealed class ServerConfig
     private static ServerConfig Load() => new()
     {
         TcpPort = int.TryParse(Env("TCP_PORT"), out var p) ? p : 9000,
-        MySqlConnectionString = Env("MYSQL_CONN")
-            ?? "Server=127.0.0.1;Port=3306;Database=game_server_cs;Uid=root;Pwd=password;" +
-               "Pooling=true;MinimumPoolSize=5;MaximumPoolSize=120;CharacterSet=utf8mb4;",
+        PostgresConnectionString = Env("POSTGRES_CONN")
+            ?? "Host=127.0.0.1;Port=5432;Database=game_server_cs;Username=postgres;Password=password;" +
+               "Pooling=true;Minimum Pool Size=5;Maximum Pool Size=120;",
         RedisConnectionString = Env("REDIS_CONN") ?? "127.0.0.1:6379",
         OrleansClusterId = Env("ORLEANS_CLUSTER_ID") ?? "game-server-cluster",
         OrleansServiceId = Env("ORLEANS_SERVICE_ID") ?? "GameServerCS",

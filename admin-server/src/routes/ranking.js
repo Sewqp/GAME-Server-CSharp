@@ -1,5 +1,5 @@
 const express = require('express');
-const { mysqlPool } = require('../db');
+const { pgPool } = require('../db');
 
 const RANKING_LIMIT = 100;
 
@@ -7,12 +7,12 @@ const router = express.Router();
 
 router.get('/ranking', async (req, res, next) => {
   try {
-    const [rows] = await mysqlPool.query(
+    const { rows } = await pgPool.query(
       `SELECT p.pname, cs.level, cs.hp_max, cs.mp_max
        FROM character_stat cs
        JOIN player p ON p.player_id = cs.player_id
        ORDER BY cs.level DESC
-       LIMIT ?`,
+       LIMIT $1`,
       [RANKING_LIMIT]
     );
 

@@ -21,8 +21,8 @@ Console.CancelKeyPress += (_, e) =>
 
 AsyncLogger.Instance.Init(config.LmStudioUrl, config.DiscordWebhookUrl, cts.Token);
 
-DbConnectionPool.Instance.Init(config.MySqlConnectionString);
-Console.WriteLine("[DB] MySQL connection pool ready.");
+DbConnectionPool.Instance.Init(config.PostgresConnectionString);
+Console.WriteLine("[DB] PostgreSQL connection pool ready.");
 
 RedisClient.Instance.Init(config.RedisConnectionString);
 Console.WriteLine("[DB] Redis connected.");

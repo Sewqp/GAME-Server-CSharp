@@ -13,7 +13,7 @@ C# 기반 비동기 분산 게임 서버 포트폴리오
 | 언어 / 플랫폼 | C# / .NET 10.0 |
 | 네트워크 | TCP 소켓 (async/await) |
 | 분산 처리 | Microsoft Orleans |
-| DB | MySQL 8.x, Redis |
+| DB | PostgreSQL 16.x, Redis |
 | 관리 서버 | Node.js, Express |
 | 배포 | Docker, Docker Compose |
 | AI 연동 | 로컬 LLM (에러 로그 분석) |
@@ -35,7 +35,7 @@ C# 기반 비동기 분산 게임 서버 포트폴리오
 - 세션 관리, 패킷 핸들러
 
 ### Phase 2 — DB 설정
-- MySQL 커넥션 풀
+- PostgreSQL 커넥션 풀
 - Redis 캐싱, 세션 관리
 
 ### Phase 3 — 게임 서버 기능
@@ -80,7 +80,7 @@ flowchart TD
         RECON["**ReconnectHandler**\nRedis 토큰 TTL 300 s\n재접속 시 상태 복원"]
         CHAT["**ChatService / ChannelManager**\n채널 브로드캐스트\n귓속말 Direct Send"]
         MATCH["**MatchmakingService**\nConcurrentQueue\n조건 충족 → 그룹 알림"]
-        SYNC["**SyncWorker**\n30 s 주기 스레드\nSETPopAll dirty_characters → MySQL"]
+        SYNC["**SyncWorker**\n30 s 주기 스레드\nSETPopAll dirty_characters → PostgreSQL"]
         LOG["**AsyncLogger**\nChannel~T~ 비동기 큐\n60 s LLM 쿨다운\nfile + console"]
     end
 
@@ -98,7 +98,7 @@ flowchart TD
         NLOG["**winston logger**\nLLM error transport"]
     end
 
-    MySQL[("**MySQL 8.x**\nplayer · character_stat\nchannel · match_history")]
+    Postgres[("**PostgreSQL 16.x**\nplayer · character_stat\nchannel · match_history")]
     RedisDB[("**Redis**\nchar:stat:{id} EX 3600\nauth_session:{id}\ndirty_characters (Set)\nreconnect:{token} EX 300")]
     LM["**LM Studio**\nlocalhost:1234\nOpenAI-compat API"]
     Discord["**Discord Webhook**\nerror + LLM 분석 embed"]
@@ -117,25 +117,25 @@ flowchart TD
     CHAT -->|"GetGrain~ChannelGrain~"| CG
     MATCH -->|"GetGrain~MatchGrain~"| MG
     PG -->|"SetAsync char:stat\nSADD dirty_characters"| RedisDB
-    PG -->|"persist on deactivate"| MySQL
+    PG -->|"persist on deactivate"| Postgres
     RECON -->|"reconnect token TTL 300 s"| RedisDB
     CG -->|"Broadcast → SessionManager"| SM
     MG -->|"match result → SessionManager"| SM
     SYNC -->|"SetPopAll dirty_characters"| RedisDB
-    SYNC -->|"UpdateStat batch"| MySQL
+    SYNC -->|"UpdateStat batch"| Postgres
     LOG -->|"WinHTTP / HttpClient POST"| LM
     LM -->|"analysis JSON"| Discord
     Browser --> ADMIN
     Browser --> RANK
-    ADMIN --> MySQL
+    ADMIN --> Postgres
     ADMIN --> RedisDB
-    RANK --> MySQL
+    RANK --> Postgres
     NLOG --> LM
 
     style TCP fill:#0d1b2a,stroke:#4a90d9,color:#cce4ff
     style ORLEANS fill:#1a0d2a,stroke:#9c27b0,color:#e1bee7
     style NODE fill:#0d2a0d,stroke:#4caf50,color:#ccffcc
-    style MySQL fill:#2a1a0d,stroke:#ff9800,color:#ffe0b2
+    style Postgres fill:#2a1a0d,stroke:#ff9800,color:#ffe0b2
     style RedisDB fill:#2a0d0d,stroke:#f44336,color:#ffccbc
     style LM fill:#0d2a2a,stroke:#00bcd4,color:#b2ebf2
     style Discord fill:#0d1a2a,stroke:#5865f2,color:#c5cae9
@@ -159,7 +159,7 @@ flowchart TD
         PD["**PacketDispatcher**\nPacketId switch\nDelegate 핸들러 등록\n인증 게이트"]
         HANDLERS["**Login/Heartbeat/Reconnect/\nChat/Match/CharacterStat Handler**\nPacketId별 처리, 그레인 직접 호출"]
         HB["**HeartbeatManager**\n주기적 타임아웃 체크\n세션 수 → Redis 발행"]
-        SYNC["**SyncWorker**\n30 s 주기\nSETPopAll dirty_characters → MySQL"]
+        SYNC["**SyncWorker**\n30 s 주기\nSETPopAll dirty_characters → PostgreSQL"]
         LOG["**AsyncLogger**\nChannel~T~ 비동기 큐\nfile + console\n60 s LLM 쿨다운"]
     end
 
@@ -177,7 +177,7 @@ flowchart TD
         NLOG["**winston logger**\nLLM error transport\n60 s 쿨다운"]
     end
 
-    MySQL[("**MySQL 8.x**\nplayer · character_stat\nchannel · match_history")]
+    Postgres[("**PostgreSQL 16.x**\nplayer · character_stat\nchannel · match_history")]
     RedisDB[("**Redis**\nchar:stat:{id} EX 3600\nstats:session_count EX 15s\ndirty_characters (Set)\nreconnect:{token} EX 300")]
     LM["**LM Studio**\nlocalhost:1234\nOpenAI-compat API"]
     Discord["**Discord Webhook**\nerror + LLM 분석 embed\n(URL 미설정 시 스킵)"]
@@ -194,25 +194,25 @@ flowchart TD
     HANDLERS -->|"GetGrain~MatchGrain~"| MG
     HANDLERS -->|"reconnect token TTL 300 s"| RedisDB
     PG -->|"SetAsync char:stat\nSADD dirty_characters"| RedisDB
-    PG -->|"persist on deactivate"| MySQL
+    PG -->|"persist on deactivate"| Postgres
     CG -->|"Broadcast → SessionManager"| SM
     MG -->|"match result → SessionManager"| SM
     HB -->|"세션 수 SET"| RedisDB
     SYNC -->|"SetPopAll dirty_characters"| RedisDB
-    SYNC -->|"UpdateStat batch"| MySQL
+    SYNC -->|"UpdateStat batch"| Postgres
     LOG -->|"HttpClient POST 분석 요청"| LM
     LOG -->|"POST 에러+분석 embed"| Discord
     Browser --> ADMIN
     Browser --> RANK
     ADMIN --> RedisDB
-    RANK --> MySQL
+    RANK --> Postgres
     NLOG -->|"POST 분석 요청"| LM
     NLOG -->|"POST 에러+분석 embed"| Discord
 
     style TCP fill:#0d1b2a,stroke:#4a90d9,color:#cce4ff
     style ORLEANS fill:#1a0d2a,stroke:#9c27b0,color:#e1bee7
     style NODE fill:#0d2a0d,stroke:#4caf50,color:#ccffcc
-    style MySQL fill:#2a1a0d,stroke:#ff9800,color:#ffe0b2
+    style Postgres fill:#2a1a0d,stroke:#ff9800,color:#ffe0b2
     style RedisDB fill:#2a0d0d,stroke:#f44336,color:#ffccbc
     style LM fill:#0d2a2a,stroke:#00bcd4,color:#b2ebf2
     style Discord fill:#0d1a2a,stroke:#5865f2,color:#c5cae9
@@ -251,6 +251,8 @@ flowchart TD
 | 2026.07.18 | 미인증 세션 PlayerId 충돌 및 로그인 시 캐릭터 유실 버그 수정 |
 | 2026.07.27 | Phase 5 스트레스 테스트 — 3만 명 동시접속 커넥션 병목(MySQL 풀 고갈) 진단 및 수정, 3만 명/30초 통과 확인 |
 | 2026.07.27 | Phase 6 관리 서버(Node.js/Express) + LLM 에러 분석 파이프라인(LM Studio 연동) 구현 |
+| 2026.07.27 | 아이템/인벤토리 시스템 추가 |
+| 2026.07.28 | MySQL → PostgreSQL 전환 |
 
 ---
 
