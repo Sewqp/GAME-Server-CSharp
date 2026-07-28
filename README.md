@@ -237,6 +237,28 @@ flowchart TD
 
 ---
 
+## 왜 MySQL에서 PostgreSQL로 전환했나
+
+2026.07.28에 DB를 MySQL → PostgreSQL로 전환했습니다. 구조 변경 없이 문법/드라이버 수준의 교체였지만,
+두 DB의 실질적인 차이를 비교해보면 다음과 같습니다.
+
+| 항목 | MySQL | PostgreSQL |
+|------|-------|------------|
+| 표준 SQL 준수 | 상대적으로 낮음 | 윈도우 함수 · CTE(`WITH`) · `RETURNING` 절 등 오래전부터 지원 |
+| UPSERT | `ON DUPLICATE KEY UPDATE` | `ON CONFLICT ... DO UPDATE` — 조건(`WHERE`)까지 지정 가능해 더 유연 |
+| JSON 지원 | `JSON` 타입(텍스트 기반) | `JSONB` — 바이너리로 파싱·저장되고 GIN 인덱싱까지 가능 |
+| 데이터 타입 | 상대적으로 단순 | 배열, range 타입, `hstore` 등 다양 |
+| 동시성(MVCC) | 스토리지 엔진(InnoDB)에 의존 | 더 정교한 MVCC 구현, 복잡한 트랜잭션에서 안정적이라는 평가 |
+| 확장성 | 제한적 | PostGIS(지리정보), pg_trgm(유사 문자열 검색) 등 확장 생태계 풍부 |
+| 라이선스 | Oracle 소유, GPL + 상용 듀얼 라이선스 | 완전 오픈소스(PostgreSQL 라이선스, BSD 계열), 상업적 제약 없음 |
+
+반대로 단순 CRUD 위주 워크로드에서는 MySQL이 여전히 가볍고 자료도 훨씬 방대해 입문 난이도가 낮다는
+장점이 있습니다. 이번 전환에서 실제로 체감한 차이는 `LAST_INSERT_ID()` → `RETURNING` + `ExecuteScalarAsync`,
+`ON DUPLICATE KEY UPDATE` → `ON CONFLICT ... DO UPDATE`처럼 MySQL 전용 문법을 표준에 더 가까운
+Postgres 문법으로 재작성하는 과정이었습니다.
+
+---
+
 ## 업로드 일지
 
 | 날짜 | 내용 |
